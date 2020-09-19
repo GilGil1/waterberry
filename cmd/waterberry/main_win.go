@@ -2,10 +2,13 @@
 package main
 
 import (
+	config "waterberry/internal/pkg/config"
 	server "waterberry/internal/pkg/webserver"
 )
 
-func main() {
+var globalConfig config.GlobalConfig
 
+func main() {
+	config.LoadConfig(&globalConfig)
 	server.Init()
 }

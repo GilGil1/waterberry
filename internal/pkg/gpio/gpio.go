@@ -1,46 +1,71 @@
 package gpio
 
-// +build !win
+// +build linux
 
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	config "waterberry/internal/pkg/config"
+
 	"github.com/stianeikeland/go-rpio"
-	
 )
 
-func Init() {
+var globalConfig config.GlobalConfig
+
+func Init(config config.GlobalConfig) {
+
+	globalConfig = config
+	setupRalays(config)
+}
+
+func StartIrrigation(config config.GlobalConfig) {
+	for {
+		time.Sleep(time.Second)
+	}
+}
+
+func setupRalays(config config.GlobalConfig) {
+
 	if err := rpio.Open(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	defer rpio.Close()
 
-	firstPin := rpio.Pin(17)
-	firstPin.Output()
-	secondPin := rpio.Pin(13)
-	secondPin.Output()
-	thirdPin := rpio.Pin(26)
-	thirdPin.Output()
-	forthPin := rpio.Pin(19)
-	forthPin.Output()
-	for x := 0; x < 20; x++ {
-		firstPin.High()
-		time.Sleep(time.Second)
-		firstPin.Low()
-		time.Sleep(time.Second)
-		firstPin.Toggle()
+	for i, relayConfig := range config.Relays {
+		fmt.Printf("relay: %d, pin=%d, config =%v\n", i, relayConfig.Pin, relayConfig)
+		pin := rpio.Pin(relayConfig.Pin)
+		pin.Output()
+		pin.Low()
+		fmt.Println("Pins are set")
+	}
+}
 
-		secondPin.Toggle()
-		time.Sleep(time.Second)
+func SetRelayMode(relay int, mode string) {
+	if err := rpio.Open(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer rpio.Close()
+	fmt.Printf("relay = %d, mode = %s\n", relay, mode)
+	relayConfig := globalConfig.Relays[relay]
+	fmt.Printf("%v\n", relayConfig)
+	pin := rpio.Pin(relayConfig.Pin)
+	pin.Output()
+	switch strings.ToLower(mode) {
+	case "on":
+		pin.Low()
 
-		thirdPin.Toggle()
-		time.Sleep(time.Second)
+	case "off":
+		pin.High()
 
-		forthPin.Toggle()
-		time.Sleep(time.Second)
+	case "toggle":
+		pin.Toggle()
 
+	default:
+		fmt.Println("mode %s undupported\n", mode)
 	}
 }

@@ -3,13 +3,16 @@
 package main
 
 import (
+	config "waterberry/internal/pkg/config"
 	gpio "waterberry/internal/pkg/gpio"
 	server "waterberry/internal/pkg/webserver"
 )
 
+var globalConfig config.GlobalConfig
+
 func main() {
-
-	go gpio.Init()
+	config.LoadConfig(&globalConfig)
+	gpio.Init(globalConfig)
+	go gpio.StartIrrigation(globalConfig)
 	server.Init()
-
 }

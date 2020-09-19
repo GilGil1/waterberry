@@ -1,0 +1,11 @@
+[Unit]
+Description=waterberry service
+After=network-online.target
+
+[Service]
+ExecStart=/home/pi/waterberry/waterberry
+WorkingDirectory=/home/pi/waterberry
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
