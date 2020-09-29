@@ -1,71 +1,71 @@
-package gpio
-
 // +build linux
+
+package gpio
 
 import (
 	"fmt"
-	"os"
-	"strings"
-	"time"
-
-	config "waterberry/internal/pkg/config"
 
 	"github.com/stianeikeland/go-rpio"
 )
 
-var globalConfig config.GlobalConfig
-
-func Init(config config.GlobalConfig) {
-
-	globalConfig = config
-	setupRalays(config)
+type GPIORelay struct {
+	Pin           uint8
+	Name          string
+	ID            int
+	CurrentStatus string
 }
 
-func StartIrrigation(config config.GlobalConfig) {
-	for {
-		time.Sleep(time.Second)
-	}
+func (gp *GPIORelay) SetConfig(id int, name string, pin uint8) {
+	gp.ID = id
+	gp.Name = name
+	gp.Pin = pin
+}
+func (gp *GPIORelay) Init() {
+
+}
+func (gp *GPIORelay) GetPin() uint8 {
+	return gp.Pin
 }
 
-func setupRalays(config config.GlobalConfig) {
+func (gp *GPIORelay) GetId() int {
+	return gp.ID
+}
+
+func (gp *GPIORelay) GetName() string {
+	return gp.Name
+}
+
+func (gp *GPIORelay) SetOn() error {
+	fmt.Printf("Before On relay # %d (pin = %d)", gp.ID, gp.Pin)
 
 	if err := rpio.Open(); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	defer rpio.Close()
-
-	for i, relayConfig := range config.Relays {
-		fmt.Printf("relay: %d, pin=%d, config =%v\n", i, relayConfig.Pin, relayConfig)
-		pin := rpio.Pin(relayConfig.Pin)
-		pin.Output()
-		pin.Low()
-		fmt.Println("Pins are set")
-	}
-}
-
-func SetRelayMode(relay int, mode string) {
-	if err := rpio.Open(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	defer rpio.Close()
-	fmt.Printf("relay = %d, mode = %s\n", relay, mode)
-	relayConfig := globalConfig.Relays[relay]
-	fmt.Printf("%v\n", relayConfig)
-	pin := rpio.Pin(relayConfig.Pin)
+	pin := rpio.Pin(gp.Pin)
 	pin.Output()
-	switch strings.ToLower(mode) {
-	case "on":
-		pin.Low()
+	pin.High()
+	gp.CurrentStatus = RelayOn
+	fmt.Printf("After On relay # %d (pin = %d)", gp.ID, gp.Pin)
 
-	case "off":
-		pin.High()
-
-	case "toggle":
-		pin.Toggle()
-
-	default:
-		fmt.Println("mode %s undupported\n", mode)
+	return nil
+}
+func (gp *GPIORelay) SetOff() error {
+	fmt.Printf("Before off of relay # %d (pin = %d)", gp.ID, gp.Pin)
+	if err := rpio.Open(); err != nil {
+		fmt.Println(err)
+		return err
 	}
+	defer rpio.Close()
+	pin := rpio.Pin(gp.Pin)
+	pin.Output()
+	pin.Low()
+	gp.CurrentStatus = RelayOff
+	fmt.Printf("After off of relay # %d (pin = %d)", gp.ID, gp.Pin)
+	return nil
+}
+
+func (gp *GPIORelay) GetCurrentMode() string {
+	return gp.CurrentStatus
 }

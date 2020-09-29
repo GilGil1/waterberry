@@ -1,2 +1,4 @@
 cmd/waterberry/bin/*
 cmd/waterberry/keys/pi
+cmd/waterberry/__debug_bin
+cmd/waterberry/main_win.exe

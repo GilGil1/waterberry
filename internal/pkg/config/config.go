@@ -11,6 +11,7 @@ type GlobalConfig struct {
 	Relays    []RelayConfig    `json:"relays"`
 	Opentimes []OpenTimeConfig `json:"timings"`
 }
+
 type RelayConfig struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
@@ -26,21 +27,22 @@ type OpenTimeConfig struct {
 	OpenTimeMinutes int    `json:"open_time_min"`
 }
 
-func LoadConfig(config *GlobalConfig) {
-
+func LoadConfig(filname string) GlobalConfig {
+	config := GlobalConfig{}
 	// Open our jsonFile
-	jsonFile, err := os.Open("config.json")
+	jsonFile, err := os.Open(filname)
 	// if we os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
 	}
 	byteValue, _ := ioutil.ReadAll(jsonFile)
+	fmt.Println(string(byteValue))
 
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
 
-	if err := json.Unmarshal(byteValue, config); err != nil {
+	if err := json.Unmarshal(byteValue, &config); err != nil {
 		panic(err)
 	}
-	fmt.Println(config)
+	return config
 }

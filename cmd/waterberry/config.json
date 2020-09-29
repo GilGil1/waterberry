@@ -1,23 +1,23 @@
 {
     "relays": [
         {
-            "id": 1,
-            "name": "Grass Sprinklers",
+            "id": 0,
+            "name": "Back Drippers",
             "pin": 17
         },
         {
-            "id": 2,
+            "id": 1,
             "name": "NA",
             "pin": 13
         },
         {
-            "id": 3,
-            "name": "back drippers",
+            "id": 2,
+            "name": "Front drippers",
             "pin": 26
         },
         {
-            "id": 4,
-            "name": "Front drippers",
+            "id": 3,
+            "name": "Grass Sprinklers",
             "pin": 19
         }
     ],
