@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	box "waterberry/internal/generator"
 	"waterberry/internal/pkg/gpio"
 )
 
@@ -24,6 +25,10 @@ func Init(relays []gpio.IRelay) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+}
+
+func watchTimers() {
 
 }
 
@@ -64,10 +69,18 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.URL)
+	key := r.URL.RequestURI()
+	b := box.Get(key)
+	if b != nil {
+		w.Write(b)
+		return
+	}
+	_ = b
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<html><head>
 	<title>WaterPi Irrigation System</title>
-	
+	<meta http-equiv="refresh" content="5">
+
 	<script type="text/javascript">
 		function setRelay(relaynum, mode ){
 			const xhttp = new XMLHttpRequest();
@@ -89,25 +102,28 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// print status table
 	fmt.Fprintf(w, "<table border =1>	")
-	fmt.Fprintf(w, fmt.Sprintf("<tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th></th></tr>",
-		"#", "id", "Name", "Status"))
+	fmt.Fprintf(w, fmt.Sprintf("<tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th></th><th></th><th>%s</th></tr>",
+		"#", "id", "Name", "Status", "Seconds to off"))
 	for key, relay := range relaysInfo {
 		lineCode := fmt.Sprintf(`
 		<tr><td>%d</td><td>%d</td><td>%s</td><td>%s</td>
 		<td><button onclick='setRelay(%d, "on")'>On</button></td>
 		<td><button onclick='setRelay(%d, "off")'>Off</button></td>
+		<td>%s</td>
 		</tr>`,
 			key,
 			relay.GetId(),
 			relay.GetName(),
 			relay.GetCurrentMode(),
 			key,
-			key)
-		fmt.Fprintf(w, lineCode)
+			key,
+			relay.GetSecondsOff(),
+		)
+		fmt.Fprintln(w, lineCode)
 	}
-	fmt.Fprintf(w, "</table>	")
+	fmt.Fprintln(w, "</table>")
 
-	fmt.Fprintf(w, "</body>	</html>")
+	fmt.Fprintln(w, "</body></html>")
 
 }
 func runCommand(command string, args []string) (string, error) {

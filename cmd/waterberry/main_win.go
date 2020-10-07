@@ -2,12 +2,9 @@
 package main
 
 import (
-	"net/http"
 	config "waterberry/internal/pkg/config"
 	gpio "waterberry/internal/pkg/gpio"
 	server "waterberry/internal/pkg/web"
-
-	"github.com/markbates/pkger"
 )
 
 func main() {
@@ -24,8 +21,6 @@ func main() {
 		}
 		relays[idx] = &stubRelay
 	}
-	dir := http.FileServer(pkger.Dir("/public"))
-	http.ListenAndServe(":3000", dir)
 
 	server.Init(relays)
 }

@@ -16,6 +16,7 @@ type IRelay interface {
 	GetPin() uint8
 	GetId() int
 	GetName() string
+	GetSecondsOff() string
 	GetCurrentMode() string
 	SetOn() error
 	SetOff() error
@@ -60,6 +61,10 @@ func (gp *StubRelay) GetCurrentMode() string {
 
 func (gp *StubRelay) GetId() int {
 	return gp.ID
+}
+
+func (gp *StubRelay) GetSecondsOff() string {
+	return "A lot"
 }
 
 func (gp *StubRelay) SetOn() error {

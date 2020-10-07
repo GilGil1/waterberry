@@ -4,6 +4,7 @@ package gpio
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/stianeikeland/go-rpio"
 )
@@ -13,6 +14,7 @@ type GPIORelay struct {
 	Name          string
 	ID            int
 	CurrentStatus string
+	StopTime      time.Time
 }
 
 func (gp *GPIORelay) SetConfig(id int, name string, pin uint8) {
@@ -21,6 +23,7 @@ func (gp *GPIORelay) SetConfig(id int, name string, pin uint8) {
 	gp.Pin = pin
 }
 func (gp *GPIORelay) Init() {
+	gp.StopTime = time.Time{}
 
 }
 func (gp *GPIORelay) GetPin() uint8 {
@@ -33,6 +36,15 @@ func (gp *GPIORelay) GetId() int {
 
 func (gp *GPIORelay) GetName() string {
 	return gp.Name
+}
+
+func (gp *GPIORelay) GetSecondsOff() string {
+	if gp.StopTime.IsZero() {
+		return "No Timer Set"
+	} else {
+		return fmt.Sprintf("%4.0f", time.Until(gp.StopTime).Seconds())
+
+	}
 }
 
 func (gp *GPIORelay) SetOn() error {
@@ -48,6 +60,7 @@ func (gp *GPIORelay) SetOn() error {
 	pin.High()
 	gp.CurrentStatus = RelayOn
 	fmt.Printf("After On relay # %d (pin = %d)", gp.ID, gp.Pin)
+	gp.setOffTimer()
 
 	return nil
 }
@@ -63,9 +76,20 @@ func (gp *GPIORelay) SetOff() error {
 	pin.Low()
 	gp.CurrentStatus = RelayOff
 	fmt.Printf("After off of relay # %d (pin = %d)", gp.ID, gp.Pin)
+	gp.StopTime = time.Time{}
+
 	return nil
 }
 
 func (gp *GPIORelay) GetCurrentMode() string {
 	return gp.CurrentStatus
+}
+
+func (gp *GPIORelay) setOffTimer() {
+	stopinSeconds := 1200
+	gp.StopTime = time.Now().Add(time.Duration(stopinSeconds) * time.Second)
+	timer := time.NewTimer(time.Duration(stopinSeconds) * time.Second)
+	<-timer.C
+	fmt.Printf("Timer %d fired\n", gp.GetId())
+	gp.SetOff()
 }
