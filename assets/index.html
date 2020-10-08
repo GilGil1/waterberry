@@ -49,7 +49,7 @@
                 <v-toolbar-title>Application</v-toolbar-title>
             </v-app-bar>
 
-            <v-main>
+            <v-main dark>
                 <v-container class="py-8 px-6" fluid>
                     <v-row class="fill-height">
                         <v-col>
@@ -88,13 +88,36 @@
 
         <div>
             <h1 class="font-weight-light">Home </h1>
-            <v-list>
-                <v-list-item v-for="item in homeItems" :key="item.id" >                  
-                    <v-list-item-content>
-                        <v-list-item-title class="primary--text">{{ item.title }}</v-list-item-title>
-                    </v-list-item-content>
-                </v-list-item>
-            </v-list>
+            <v-card>
+                <v-data-table 
+                    :headers="headers" 
+                    :items="homeItems" 
+                    item-key="ID"
+                    dark
+                    >
+                   
+                    <template v-slot:item="{ item }">
+                        <tr>
+                            <td>{{item.id}}</td>
+                            <td>{{item.name}}</td>
+                            <td>{{item.mode}}</td>
+                            <td>{{item.pin}}</td>
+                            <td>
+                                <v-btn class="mx-2" fab dark x-small color="grey" @click="onButtonClick(item,'on')">
+                                    <v-icon dark>mdi-circle</v-icon>
+                                </v-btn>
+                            </td>
+                            <td>
+                                <v-btn class="mx-2" fab dark x-small color="grey" @click="onButtonClick(item,'off')">
+                                    <v-icon dark>mdi-circle-outline</v-icon>
+                                </v-btn>
+                            </td>
+                            <td>{{item.seconds_off}}</td>
+                        </tr>
+                    </template>
+
+                </v-data-table>
+            </v-card>
         </div>
        
     </script>
@@ -188,13 +211,36 @@
         const Home = {
             template: '#home',
             data: () => ({
-                homeItems: [], 
+                headers: [
+                    { text: "ID", value: "ID" },
+                    { text: "Name", value: "Name" },
+                    { text: "CurrentStatus", value: "CurrentStatus" },
+                    { text: "Pin", value: "Pin" },
+                    { text: "On", value: "On" },
+                    { text: "Off", value: "Off" },
+                    { text: "Seconds Off", value: "Seconds Off" },
+
+
+                ],
+                homeItems: [],
                 loading: true
             }),
+            methods: {
+                onButtonClick(item, mode) {
+                    console.log('click on ' + item.id + mode)
+                    const xhttp = new XMLHttpRequest();
+                    url = "water?relay="+item.id+"&mode="+mode;
+                    console.log('url ' +url)
+
+        			xhttp.open("GET", url, true);
+			        xhttp.send();
+                    location.reload();
+                }
+            },
             beforeRouteEnter(to, from, next) {
                 next(Home => {
                     // Home.homeItems = [{ "userId": 5, "id": 1, "title": "dfdf aut autem", "completed": false }]
-                    axios.get('https://jsonplaceholder.typicode.com/todos')
+                    axios.get('/relays')
                         .then(response => (Home.homeItems = response.data))
                         .catch(error => console.log(error))
 
@@ -204,7 +250,7 @@
             beforeRouteUpdate(to, from, next) {
                 next(Home => {
                     // Home.homeItems = [{ "userId": 5, "id": 1, "title": "dfdf aut autem", "completed": false }]
-                    axios.get('https://jsonplaceholder.typicode.com/todos')
+                    axios.get('http://localhost:9090/relays')
                         .then(response => (Home.homeItems = response.data))
                         .catch(error => console.log(error))
 
@@ -214,32 +260,32 @@
         }
 
         const routes = [
-                { path: '/home', component: Home },
-                { path: '/reports', component: Reports },
-            ]
+            { path: '/home', component: Home },
+            { path: '/reports', component: Reports },
+        ]
 
         const router = new VueRouter({
-                routes
-            })
+            routes
+        })
 
         new Vue({
-                el: '#app',
-                router: router,
-                vuetify: new Vuetify(),
-                data() {
-                    return {
-                        items: [
-                            { title: 'Home', icon: 'mdi-view-dashboard', link: '#/home' },
-                            { title: 'Reports', icon: 'mdi-image', link: '#/reports' },
-                        ],
-                        right: null,
-                        drawer: null,
-                        cards: ['Today', 'Yesterday'],
+            el: '#app',
+            router: router,
+            vuetify: new Vuetify(),
+            data() {
+                return {
+                    items: [
+                        { title: 'Home', icon: 'mdi-view-dashboard', link: '#/home' },
+                        { title: 'Reports', icon: 'mdi-image', link: '#/reports' },
+                    ],
+                    right: null,
+                    drawer: null,
+                    cards: ['Today', 'Yesterday'],
 
-                    }
-                },
+                }
+            },
 
-            })
+        })
     </script>
 </body>
 

@@ -57,7 +57,7 @@ func (gp *GPIORelay) SetOn() error {
 	defer rpio.Close()
 	pin := rpio.Pin(gp.Pin)
 	pin.Output()
-	pin.High()
+	pin.Low()
 	gp.CurrentStatus = RelayOn
 	fmt.Printf("After On relay # %d (pin = %d)", gp.ID, gp.Pin)
 	gp.setOffTimer()
@@ -73,7 +73,7 @@ func (gp *GPIORelay) SetOff() error {
 	defer rpio.Close()
 	pin := rpio.Pin(gp.Pin)
 	pin.Output()
-	pin.Low()
+	pin.High()
 	gp.CurrentStatus = RelayOff
 	fmt.Printf("After off of relay # %d (pin = %d)", gp.ID, gp.Pin)
 	gp.StopTime = time.Time{}

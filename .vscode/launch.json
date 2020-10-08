@@ -12,6 +12,6 @@
             "program": "${workspaceFolder}/cmd/waterberry/main_win.go",
             "env": {},
             "args": []
-        }
-    ]
+        },
+    ],
 }

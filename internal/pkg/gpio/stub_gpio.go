@@ -75,3 +75,14 @@ func (gp *StubRelay) SetOff() error {
 	gp.CurrentStatus = RelayOff
 	return nil
 }
+
+func GetPropertiesMap(relay IRelay) map[string]interface{} {
+	var singleMap = make(map[string]interface{})
+	singleMap["id"] = relay.GetId()
+	singleMap["name"] = relay.GetName()
+	singleMap["pin"] = relay.GetPin()
+	singleMap["mode"] = relay.GetCurrentMode()
+	singleMap["seconds_off"] = relay.GetSecondsOff()
+	return singleMap
+
+}

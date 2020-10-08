@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,6 +21,7 @@ var relaysInfo []gpio.IRelay
 func Init(relays []gpio.IRelay) {
 	relaysInfo = relays
 	http.HandleFunc("/", statusHandler)
+	http.HandleFunc("/relays", relaysHandler)
 	http.HandleFunc("/water", setHandler)
 	err := http.ListenAndServe(":9090", nil)
 	if err != nil {
@@ -27,9 +29,21 @@ func Init(relays []gpio.IRelay) {
 	}
 
 }
-
-func watchTimers() {
-
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+func relaysHandler(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	jsonData := make([]map[string]interface{}, 0)
+	for _, v := range relaysInfo {
+		singleMap := gpio.GetPropertiesMap(v)
+		jsonData = append(jsonData, singleMap)
+	}
+	resp, err := json.MarshalIndent(jsonData, "", "\t")
+	if err != nil {
+		fmt.Printf("%v", err)
+	}
+	w.Write(resp)
 }
 
 func setHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +84,13 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.URL)
 	key := r.URL.RequestURI()
-	b := box.Get(key)
+	var b []byte
+	if key == "/" {
+		b = box.Get("/index.html")
+	} else {
+		b = box.Get(key)
+	}
+
 	if b != nil {
 		w.Write(b)
 		return
