@@ -24,7 +24,6 @@ func (gp *GPIORelay) SetConfig(id int, name string, pin uint8, timings []config.
 }
 
 func (gp *GPIORelay) SetFields(mode string, updateTime time.Time) error {
-
 	gp.baseRelay.SetFields(mode, updateTime)
 	return nil
 }

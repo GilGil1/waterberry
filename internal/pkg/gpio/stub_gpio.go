@@ -1,7 +1,6 @@
 package gpio
 
 import (
-	"fmt"
 	"time"
 	config "waterberry/internal/pkg/config"
 )
@@ -26,12 +25,7 @@ func (gp *StubRelay) SetConfig(id int, name string, pin uint8, timings []config.
 }
 
 func (gp *StubRelay) SetFields(mode string, updateTime time.Time) error {
-	if mode == RelayOff || mode == RelayOn {
-		gp.baseRelay.CurrentStatus = mode
-		gp.baseRelay.UpdateTime = updateTime
-	} else {
-		return fmt.Errorf("Mode %s unsupported\n", mode)
-	}
+	gp.baseRelay.SetFields(mode, updateTime)
 	return nil
 }
 

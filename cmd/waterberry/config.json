@@ -4,12 +4,26 @@
             "id": 0,
             "name": "Back Drippers",
             "pin": 17,
-            "timings": [{
-                "weekday" : 7,
-                "hour": 11,
-                "minute":1,
-                "open_minutes":30
-            }]
+            "timings": [
+                {
+                    "weekday": 1,
+                    "hour": 6,
+                    "minute": 0,
+                    "open_minutes": 30
+                },
+                {
+                    "weekday": 3,
+                    "hour": 6,
+                    "minute": 0,
+                    "open_minutes": 30
+                },
+                {
+                    "weekday": 5,
+                    "hour": 6,
+                    "minute": 0,
+                    "open_minutes": 30
+                }
+            ]
         },
         {
             "id": 1,
@@ -19,25 +33,40 @@
         {
             "id": 2,
             "name": "Front drippers",
-            "pin": 26, 
-            "timings": [{
-                "weekday" : 7,
-                "hour": 11,
-                "minute":11,
-                "open_minutes":2
-            },
-            {
-                "weekday" : 7,
-                "hour": 11,
-                "minute":16,
-                "open_minutes":1
-            }
-        ]
+            "pin": 26,
+            "timings": [
+                {
+                    "weekday": 1,
+                    "hour": 6,
+                    "minute": 0,
+                    "open_minutes": 30
+                },
+                {
+                    "weekday": 3,
+                    "hour": 6,
+                    "minute": 0,
+                    "open_minutes": 30
+                },
+                {
+                    "weekday": 5,
+                    "hour": 6,
+                    "minute": 0,
+                    "open_minutes": 30
+                }
+            ]
         },
         {
             "id": 3,
             "name": "Grass Sprinklers",
-            "pin": 19
+            "pin": 19,
+            "timings": [
+                {
+                    "weekday": 6,
+                    "hour": 7,
+                    "minute": 0,
+                    "open_minutes": 20
+                }
+            ]
         }
     ]
 }
