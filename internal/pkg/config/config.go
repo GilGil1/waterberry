@@ -8,23 +8,21 @@ import (
 )
 
 type GlobalConfig struct {
-	Relays    []RelayConfig    `json:"relays"`
-	Opentimes []OpenTimeConfig `json:"timings"`
+	Relays []RelayConfig `json:"relays"`
 }
 
 type RelayConfig struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Pin  uint8  `json:"pin"`
+	ID      int              `json:"id"`
+	Name    string           `json:"name"`
+	Pin     uint8            `json:"pin"`
+	Timings []OpenTimeConfig `json:"timings"`
 }
 
 type OpenTimeConfig struct {
-	ID              string `json:"id"`
-	Name            string `json:"name"`
-	RelayID         int    `json:"relay_id"`
-	Day             []int  `json:"days"`
-	StartHour24H    int    `json:"start_hour"`
-	OpenTimeMinutes int    `json:"open_time_min"`
+	WeekDay         int `json:"weekday"`
+	Hour            int `json:"hour"`
+	Minute          int `json:"minute"`
+	OpenTimeMinutes int `json:"open_minutes"`
 }
 
 func LoadConfig(filname string) GlobalConfig {

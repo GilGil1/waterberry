@@ -2,29 +2,29 @@
 <html>
 
 <head>
-    <title>My first Vue app</title>
+    <title>WaterPi - The home irrigation system</title>
     <script src="https://unpkg.com/vue"></script>
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <!--<meta http-equiv="refresh" content="15">-->
+
 </head>
 
 <body>
 
     <div id="app">
-        <v-app id="inspire">
-
-
+        <v-app id="app">
             <v-navigation-drawer v-model="drawer" app dark>
                 <v-list-item>
                     <v-list-item-content>
                         <v-list-item-title class="title">
-                            Application
+                            Waterberry
                         </v-list-item-title>
                         <v-list-item-subtitle>
-                            subtext
+                            Home Irrigation System
                         </v-list-item-subtitle>
                     </v-list-item-content>
                 </v-list-item>
@@ -46,16 +46,14 @@
             <v-app-bar app>
                 <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
-                <v-toolbar-title>Application</v-toolbar-title>
+                <v-toolbar-title>WaterPi</v-toolbar-title>
             </v-app-bar>
 
             <v-main dark>
                 <v-container class="py-8 px-6" fluid>
                     <v-row class="fill-height">
                         <v-col>
-                            <transition name="fade">
-                                <router-view></router-view>
-                            </transition>
+                            <router-view :key="$route.path"></router-view>
                         </v-col>
                     </v-row>
 
@@ -77,10 +75,27 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
 
-    <script type="text/x-template" id="reports">
+    <script type="text/x-template" id="logs">
         <div>
-            <h1 class="font-weight-light">Sales Report</h1>
-           
+            <h1 class="font-weight-light">Logs</h1>
+            <v-card>
+                <v-data-table 
+                    :headers="logHeaders" 
+                    :items="logItems" 
+                    item-key="ID"
+                    dark
+                    >
+                    <template v-slot:item="{ item }">
+                        <tr>
+                            <td>{{item.Name}}</td>
+                            <td>{{item.CurrentStatus}}</td>
+                            <td>{{item.UpdateTime}}</td>                          
+                        </tr>
+                    </template>
+
+                </v-data-table>
+            </v-card>
+
         </div>
     </script>
 
@@ -122,89 +137,79 @@
        
     </script>
 
+
+    <script type="text/x-template" id="status">
+
+        <div>
+            <h1 class="font-weight-light">Status </h1>
+            <v-card>
+                <v-card-text>
+                                 
+                      <div class="grey--text ml-4">
+                        Time: {{status.SystemTime}}
+                      </div>
+                      <div class="grey--text ml-4">
+                        Temp: {{status.CpuTemp}}
+                      </div>
+                      <div class="grey--text ml-4">
+                        Git Commit: {{status.GitCommit}}
+                      </div>
+                      <div class="grey--text ml-4">
+                        Build Time: {{status.BuildTime}}
+                      </div>
+                  </v-card-text>
+
+            </v-card>
+        </div>
+       
+    </script>
     <script>
 
 
 
-        const Reports = {
-            template: '#reports',
+        const Logs = {
+            template: '#logs',
             data: () => ({
-                headers: [
-                    {
-                        text: "Product",
-                        align: "left",
-                        sortable: false,
-                        value: "name"
-                    },
-                    { text: "Sales", value: "sales" },
-                    { text: "Customers", value: "customers" },
-                    { text: "Items", value: "items" },
+                logHeaders: [
+                    { text: "Name", value: "Name" },
+                    { text: "CurrentStatus", value: "CurrentStatus" },
+                    { text: "Date", value: "UpdateTime" }
                 ],
-                reportItems: [
-                    {
-                        id: 1,
-                        name: "N95 Mask",
-                        sales: 2062,
-                        customers: 102,
-                        items: 8029,
-                        available: null
-                    },
-                    {
-                        id: 2,
-                        name: "Safety gloves",
-                        sales: 62,
-                        customers: 12,
-                        items: 70,
-                        available: null
-                    },
-                    {
-                        id: 3,
-                        name: "Widget 2",
-                        sales: 262,
-                        customers: 32,
-                        items: 1020,
-                        available: null
-                    },
-                    {
-                        id: 4,
-                        name: "Widget 4",
-                        sales: 362,
-                        customers: 12,
-                        items: 190,
-                        available: null
-                    },
-                    {
-                        id: 4,
-                        name: "Widget 4",
-                        sales: 362,
-                        customers: 12,
-                        items: 190,
-                        available: null
-                    },
-                    {
-                        id: 19,
-                        name: "Widget ABC",
-                        sales: 62,
-                        customers: 5,
-                        items: 17,
-                        available: null
-                    },
-                    {
-                        id: 12,
-                        name: "Widget 12",
-                        sales: 262,
-                        customers: 22,
-                        items: 199,
-                        available: null
-                    },
-                ]
+                logItems: [],
             }),
-            methods: {
-                sumField(key) {
-                    // sum data in give key (property)
-                    return this.reportItems.reduce((a, b) => a + (b[key] || 0), 0)
-                }
+            methods: {},
+
+            beforeRouteEnter(to, from, next) {
+                console.log("to log");
+                next(Logs => {
+                    axios.get('/log')
+                        .then(response => (Logs.logItems = response.data))
+                        .catch(error => console.log(error))
+                    next();
+                })
+            },
+            beforeRouteUpdate(to, from, next) {
+                console.log("before log update")
             }
+        }
+
+
+        const Status = {
+            template: '#status',
+            data: () => ({
+                status: "",
+            }),
+            methods: {},
+
+            beforeRouteEnter(to, from, next) {
+                console.log("to status");
+                next(Status => {
+                    axios.get('/status')
+                        .then(response => (Status.status = response.data))
+                        .catch(error => console.log(error))
+                    next();
+                })
+            },
         }
 
 
@@ -229,17 +234,17 @@
                 onButtonClick(item, mode) {
                     console.log('click on ' + item.id + mode)
                     const xhttp = new XMLHttpRequest();
-                    url = "water?relay="+item.id+"&mode="+mode;
-                    console.log('url ' +url)
+                    url = "water?relay=" + item.id + "&mode=" + mode;
+                    console.log('url ' + url)
 
-        			xhttp.open("GET", url, true);
-			        xhttp.send();
+                    xhttp.open("GET", url, true);
+                    xhttp.send();
                     location.reload();
                 }
             },
             beforeRouteEnter(to, from, next) {
+                console.log("to home before enter");
                 next(Home => {
-                    // Home.homeItems = [{ "userId": 5, "id": 1, "title": "dfdf aut autem", "completed": false }]
                     axios.get('/relays')
                         .then(response => (Home.homeItems = response.data))
                         .catch(error => console.log(error))
@@ -248,9 +253,9 @@
                 })
             },
             beforeRouteUpdate(to, from, next) {
+                console.log("to home before upd");
                 next(Home => {
-                    // Home.homeItems = [{ "userId": 5, "id": 1, "title": "dfdf aut autem", "completed": false }]
-                    axios.get('http://localhost:9090/relays')
+                    axios.get('/relays')
                         .then(response => (Home.homeItems = response.data))
                         .catch(error => console.log(error))
 
@@ -260,8 +265,10 @@
         }
 
         const routes = [
+            { path: '/', component: Status },
+            { path: '/status', component: Status },
             { path: '/home', component: Home },
-            { path: '/reports', component: Reports },
+            { path: '/logs', component: Logs },
         ]
 
         const router = new VueRouter({
@@ -275,12 +282,13 @@
             data() {
                 return {
                     items: [
-                        { title: 'Home', icon: 'mdi-view-dashboard', link: '#/home' },
-                        { title: 'Reports', icon: 'mdi-image', link: '#/reports' },
+                        { title: 'System Status', icon: 'mdi-gamepad', link: '#/status' },
+                        { title: 'Water Valves Status', icon: 'mdi-view-dashboard', link: '#/home' },
+                        { title: 'Irrigation Logs', icon: 'mdi-image', link: '#/logs' },
+
                     ],
                     right: null,
                     drawer: null,
-                    cards: ['Today', 'Yesterday'],
 
                 }
             },

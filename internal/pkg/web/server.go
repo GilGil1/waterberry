@@ -16,13 +16,18 @@ import (
 )
 
 var relaysInfo []gpio.IRelay
+var BuildTime string
+var GitCommit string
 
 // Init ... init the server with the relay config
 func Init(relays []gpio.IRelay) {
 	relaysInfo = relays
-	http.HandleFunc("/", statusHandler)
+	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/relays", relaysHandler)
 	http.HandleFunc("/water", setHandler)
+	http.HandleFunc("/log", logHandler)
+	http.HandleFunc("/status", systemStatusHandler)
+
 	err := http.ListenAndServe(":9090", nil)
 	if err != nil {
 		log.Fatal(err)
@@ -36,7 +41,7 @@ func relaysHandler(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	jsonData := make([]map[string]interface{}, 0)
 	for _, v := range relaysInfo {
-		singleMap := gpio.GetPropertiesMap(v)
+		singleMap := v.GetPropertiesMap()
 		jsonData = append(jsonData, singleMap)
 	}
 	resp, err := json.MarshalIndent(jsonData, "", "\t")
@@ -46,6 +51,35 @@ func relaysHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+type SystemStatus struct {
+	SystemTime string
+	CpuTemp    string
+	GitCommit  string
+	BuildTime  string
+}
+
+func systemStatusHandler(w http.ResponseWriter, r *http.Request) {
+	status := SystemStatus{
+		SystemTime: string(time.Now().Format(time.RFC3339)),
+		GitCommit:  GitCommit,
+		BuildTime:  BuildTime,
+	}
+	if !isWindows() {
+		status.CpuTemp = getCPUTemp()
+	}
+	bytes, _ := json.MarshalIndent(status, "", "\t")
+	w.Write(bytes)
+}
+
+func logHandler(w http.ResponseWriter, r *http.Request) {
+	res, err := gpio.LoadLogs("water.txt")
+	if err == nil {
+		w.Write([]byte(res))
+	} else {
+		w.Write([]byte(fmt.Sprintf("Error in logs : %v", err)))
+	}
+
+}
 func setHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.URL)
 
@@ -81,71 +115,19 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func statusHandler(w http.ResponseWriter, r *http.Request) {
+func mainHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.URL)
 	key := r.URL.RequestURI()
-	var b []byte
-	if key == "/" {
-		b = box.Get("/index.html")
-	} else {
-		b = box.Get(key)
+	if key == "/" || key == "" {
+		key = "/index.html"
 	}
-
+	b := box.Get(key)
 	if b != nil {
 		w.Write(b)
 		return
 	}
-	_ = b
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, `<html><head>
-	<title>WaterPi Irrigation System</title>
-	<meta http-equiv="refresh" content="5">
-
-	<script type="text/javascript">
-		function setRelay(relaynum, mode ){
-			const xhttp = new XMLHttpRequest();
-			url = "water?relay="+relaynum+"&mode="+mode;
-			//alert(url);
-			xhttp.open("GET", url, true);
-			xhttp.send();
-			location.reload();
-
-		}
-	</script>
-
-	</head><body>`)
-	fmt.Fprintf(w, fmt.Sprintf("<p>Time is : %s</p>", string(time.Now().Format(time.RFC3339))))
-
-	if !isWindows() {
-		fmt.Fprintf(w, fmt.Sprintf("<p>Temp is : %s</p>", getCPUTemp()))
-
-	}
-	// print status table
-	fmt.Fprintf(w, "<table border =1>	")
-	fmt.Fprintf(w, fmt.Sprintf("<tr><th>%s</th><th>%s</th><th>%s</th><th>%s</th><th></th><th></th><th>%s</th></tr>",
-		"#", "id", "Name", "Status", "Seconds to off"))
-	for key, relay := range relaysInfo {
-		lineCode := fmt.Sprintf(`
-		<tr><td>%d</td><td>%d</td><td>%s</td><td>%s</td>
-		<td><button onclick='setRelay(%d, "on")'>On</button></td>
-		<td><button onclick='setRelay(%d, "off")'>Off</button></td>
-		<td>%s</td>
-		</tr>`,
-			key,
-			relay.GetId(),
-			relay.GetName(),
-			relay.GetCurrentMode(),
-			key,
-			key,
-			relay.GetSecondsOff(),
-		)
-		fmt.Fprintln(w, lineCode)
-	}
-	fmt.Fprintln(w, "</table>")
-
-	fmt.Fprintln(w, "</body></html>")
-
 }
+
 func runCommand(command string, args []string) (string, error) {
 	cmd := exec.Command(command, args...)
 	cmd.Stdin = strings.NewReader("some input")
@@ -167,9 +149,20 @@ func getCPUTemp() string {
 	if err != nil {
 		tempOut = "Could not read temperature"
 	}
-	return tempOut
+	return strings.Replace(tempOut, "temp=", "", 1)
 }
 
 func isWindows() bool {
 	return os.PathSeparator == '\\' && os.PathListSeparator == ';'
 }
+
+func RunTimmgs() {
+
+	for _, relay := range relaysInfo {
+		relay.GetCurrentMode()
+	}
+}
+
+// func RelayExpectedModeNow(gp) {
+
+// }

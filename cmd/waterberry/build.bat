@@ -1,3 +1,8 @@
+for /f %%i in ('git rev-list -1 head') do set GIT_COMMIT=%%i
+for /f %%i in ('date /t') do set BUILD_DATE=%%i
+for /f %%i in ('time /t') do set BUILD_TIME=%%i
+echo %GIT_COMMIT%
+echo %BUILD_TIME%
 
 Rem  Generate code
 SET GOARCH=amd64
@@ -15,8 +20,8 @@ SET GOOS=linux
 set CGO_ENABLED=0
 set HOST=pi@192.168.4.245
 del  bin\waterberry
-
-go build -tags linux -o bin\waterberry main.go
+set LD_FLAGS="-X main.GitCommit='%GIT_COMMIT%' -X main.BuildTime='%BUILD_DATE%-%BUILD_TIME%'"
+go build -ldflags=%LD_FLAGS% -tags linux -o bin\waterberry main.go 
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 REM Stop and upgrade the software
