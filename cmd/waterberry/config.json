@@ -8,20 +8,20 @@
                 {
                     "weekday": 1,
                     "hour": 6,
-                    "minute": 0,
-                    "open_minutes": 30
+                    "minute": 8,
+                    "open_minutes": 20
                 },
                 {
                     "weekday": 3,
                     "hour": 6,
                     "minute": 0,
-                    "open_minutes": 30
+                    "open_minutes": 20
                 },
                 {
                     "weekday": 5,
                     "hour": 6,
                     "minute": 0,
-                    "open_minutes": 30
+                    "open_minutes": 20
                 }
             ]
         },
@@ -37,21 +37,21 @@
             "timings": [
                 {
                     "weekday": 1,
-                    "hour": 6,
+                    "hour": 7,
                     "minute": 0,
-                    "open_minutes": 30
+                    "open_minutes": 20
                 },
                 {
                     "weekday": 3,
-                    "hour": 6,
+                    "hour": 7,
                     "minute": 0,
-                    "open_minutes": 30
+                    "open_minutes": 20
                 },
                 {
-                    "weekday": 5,
-                    "hour": 6,
+                    "weekday": 7,
+                    "hour": 7,
                     "minute": 0,
-                    "open_minutes": 30
+                    "open_minutes": 20
                 }
             ]
         },
@@ -64,7 +64,7 @@
                     "weekday": 6,
                     "hour": 7,
                     "minute": 0,
-                    "open_minutes": 20
+                    "open_minutes": 10
                 }
             ]
         }

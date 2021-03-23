@@ -45,14 +45,19 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
-func printModeChange(gp IRelay) {
+func printModeChange(br BaseRelay) {
 
-	WriteToFile(LOG_FILE, relayToTxt(gp))
+	WriteToFile(LOG_FILE, relayToTxt(br))
 
 }
 
-func relayToTxt(gp IRelay) string {
-	out := fmt.Sprintf("%s,%d,%d,%s,%s\n", time.Now().Format(time.RFC3339), gp.GetId(), gp.GetPin(), gp.GetName(), gp.GetCurrentMode())
+func relayToTxt(br BaseRelay) string {
+	out := fmt.Sprintf("%s,%d,%d,%s,%s\n",
+		time.Now().Format(time.RFC3339),
+		br.GetId(),
+		br.GetPin(),
+		br.GetName(),
+		br.GetCurrentMode())
 	return out
 }
 
@@ -67,7 +72,7 @@ func LoadLogs(filename string) (string, error) {
 			log.Fatal(err)
 		}
 		scanner := bufio.NewScanner(f)
-		var relayList []BaseRelay = make([]BaseRelay, 0, 0)
+		var relayList []BaseRelay = make([]BaseRelay, 0)
 		for scanner.Scan() {
 			fmt.Println(scanner.Text())
 			result += scanner.Text() + "\n"
@@ -81,7 +86,7 @@ func LoadLogs(filename string) (string, error) {
 		}
 
 	} else {
-		return result, fmt.Errorf("File %s not found\n", filename)
+		return result, fmt.Errorf("file %s not found", filename)
 	}
 	defer f.Close()
 	return result, nil
@@ -91,7 +96,7 @@ func txtToRelay(line string) (BaseRelay, error) {
 
 	updateTime, err := time.Parse(time.RFC3339, items[0])
 	if err != nil {
-		return BaseRelay{}, fmt.Errorf("Date %v malformed", err)
+		return BaseRelay{}, fmt.Errorf("date %v malformed", err)
 	}
 	id, err := strconv.Atoi(items[1])
 	if err != nil {

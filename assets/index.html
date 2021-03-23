@@ -9,11 +9,11 @@
     <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-    <!--<meta http-equiv="refresh" content="15">-->
-
+    <meta http-equiv="refresh" content="15">
 </head>
 
 <body>
+
 
     <div id="app">
         <v-app id="app">
@@ -50,6 +50,7 @@
             </v-app-bar>
 
             <v-main dark>
+
                 <v-container class="py-8 px-6" fluid>
                     <v-row class="fill-height">
                         <v-col>
@@ -74,7 +75,6 @@
     <script src="https://npmcdn.com/vue-router/dist/vue-router.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
-
     <script type="text/x-template" id="logs">
         <div>
             <h1 class="font-weight-light">Logs</h1>
@@ -82,6 +82,8 @@
                 <v-data-table 
                     :headers="logHeaders" 
                     :items="logItems" 
+                    :sort-by.sync="sortBy"
+                    :sort-desc.sync="sortDesc"
                     item-key="ID"
                     dark
                     >
@@ -140,29 +142,54 @@
 
     <script type="text/x-template" id="status">
 
-        <div>
-            <h1 class="font-weight-light">Status </h1>
-            <v-card>
-                <v-card-text>
-                                 
-                      <div class="grey--text ml-4">
-                        Time: {{status.SystemTime}}
-                      </div>
-                      <div class="grey--text ml-4">
-                        Temp: {{status.CpuTemp}}
-                      </div>
-                      <div class="grey--text ml-4">
-                        Git Commit: {{status.GitCommit}}
-                      </div>
-                      <div class="grey--text ml-4">
-                        Build Time: {{status.BuildTime}}
-                      </div>
-                  </v-card-text>
 
+    <div>
+
+        <h1 class="font-weight-light">Status </h1>
+        <v-card>
+            <v-card-text>
+
+                <div class="grey--text ml-4">
+                    Time: {{status.SystemTime}}
+                </div>
+                <div class="grey--text ml-4">
+                    Temp: {{status.CpuTemp}}
+                </div>
+                <div class="grey--text ml-4">
+                    Git Commit: {{status.GitCommit}}
+                </div>
+                <div class="grey--text ml-4">
+                    Build Time: {{status.BuildTime}}
+                </div>
+            </v-card-text>
+
+        </v-card>
+    </div>
+
+    <script type="text/x-template" id="weather">
+        <div>
+            <h1 class="font-weight-light">Weather </h1>
+            <v-card>
+                <v-data-table 
+                    :headers="weatherHeaders" 
+                    :items="weatherItems" 
+                    item-key="dt"
+                    dark
+                    >
+                   
+                    <template v-slot:item="{ item }">
+                        <tr>
+                            <td>{{item.dt}}</td>
+                        </tr>
+                    </template>
+
+                </v-data-table>
             </v-card>
         </div>
        
+        
     </script>
+
     <script>
 
 
@@ -175,6 +202,8 @@
                     { text: "CurrentStatus", value: "CurrentStatus" },
                     { text: "Date", value: "UpdateTime" }
                 ],
+                sortBy: 'UpdateTime',
+                sortDesc: true,
                 logItems: [],
             }),
             methods: {},
@@ -193,6 +222,58 @@
             }
         }
 
+        const Config = {
+            template: '#config',
+            data: () => ({
+                configHeaders: [
+                    { text: "Name", value: "Name" },
+                    { text: "CurrentStatus", value: "CurrentStatus" },
+                    { text: "Date", value: "UpdateTime" }
+                ],
+                configItems: [],
+            }),
+            methods: {},
+
+            beforeRouteEnter(to, from, next) {
+                console.log("to config");
+                next(Config => {
+                    axios.get('/config')
+                        .then(response => (Logs.logItems = response.data))
+                        .catch(error => console.log(error))
+                    next();
+                })
+            },
+            beforeRouteUpdate(to, from, next) {
+                console.log("before config update")
+            }
+        }
+
+
+        const Weather = {
+            template: '#weather',
+            data: () => ({
+                weatherHeaders: [
+                    { text: "dt", value: "dt" },
+                ],
+                weatherItems: {},
+            }),
+            methods: {},
+
+            beforeRouteEnter(to, from, next) {
+                console.log("to weather");
+                next(Weather => {
+                    axios.get('/weather')
+                        .then(response => (weatherItems = response.data.list))
+                        .catch(error => console.log(error))
+                    next();
+                })
+                console.log('after weather fetch');
+                console.log(weatherItems);
+            },
+            beforeRouteUpdate(to, from, next) {
+                console.log("before weather update")
+            }
+        }
 
         const Status = {
             template: '#status',
@@ -269,6 +350,9 @@
             { path: '/status', component: Status },
             { path: '/home', component: Home },
             { path: '/logs', component: Logs },
+            { path: '/config', component: Config },
+
+            { path: '/weather', component: Weather },
         ]
 
         const router = new VueRouter({
@@ -285,7 +369,8 @@
                         { title: 'System Status', icon: 'mdi-gamepad', link: '#/status' },
                         { title: 'Water Valves Status', icon: 'mdi-view-dashboard', link: '#/home' },
                         { title: 'Irrigation Logs', icon: 'mdi-image', link: '#/logs' },
-
+                        { title: 'Configuration ', icon: 'mdi-image', link: '#/config' },
+                        { title: 'Weather Info', icon: 'mdi-image', link: '#/weather' },
                     ],
                     right: null,
                     drawer: null,

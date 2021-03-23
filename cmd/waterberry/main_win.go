@@ -13,11 +13,11 @@ func main() {
 
 	// Set Relay Config
 	for idx, relayConfig := range config.Relays {
-		stubRelay := gpio.StubRelay{}
-		stubRelay.SetConfig(relayConfig.ID, relayConfig.Name, relayConfig.Pin, relayConfig.Timings)
-		stubRelay.SetOff()
-		relays[idx] = &stubRelay
+		var relay gpio.IRelay = gpio.NewStubRelay()
+		relays[idx] = relay
+		relay.SetConfig(relayConfig.ID, relayConfig.Name, relayConfig.Pin, relayConfig.Timings)
+		relay.Init()
 	}
 
-	server.Init(relays)
+	server.Init(relays, config)
 }

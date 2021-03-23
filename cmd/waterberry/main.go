@@ -11,17 +11,19 @@ var GitCommit = "Unknown"
 var BuildTime = "Unknown"
 
 func main() {
+	server.BuildTime = BuildTime
+	server.GitCommit = GitCommit
 	config := config.LoadConfig("config.json")
 	relays := make([]gpio.IRelay, 4)
 
 	// Set Relay Config
 	for idx, relayConfig := range config.Relays {
-		gpioRelay := gpio.GPIORelay{}
-		gpioRelay.SetConfig(relayConfig.ID, relayConfig.Name, relayConfig.Pin, relayConfig.Timings)
-		relays[idx] = &gpioRelay
+		var relay gpio.IRelay = gpio.NewGPIORelay()
+		relays[idx] = relay
+		relay.SetConfig(relayConfig.ID, relayConfig.Name, relayConfig.Pin, relayConfig.Timings)
+		relay.Init()
 	}
 
-	server.Init(relays)
-	server.BuildTime = BuildTime
-	server.GitCommit = GitCommit
+	server.Init(relays, config)
+
 }

@@ -16,66 +16,54 @@ const (
 )
 
 type GPIORelay struct {
-	baseRelay BaseRelay
+	base *BaseRelay
 }
 
-func (gp *GPIORelay) SetConfig(id int, name string, pin uint8, timings []config.OpenTimeConfig) {
-	gp.baseRelay.SetConfig(id, name, pin, timings)
+func NewGPIORelay() *GPIORelay {
+	relay := GPIORelay{}
+	relay.base = &BaseRelay{}
+	return &relay
 }
 
-func (gp *GPIORelay) SetFields(mode string, updateTime time.Time) error {
-	gp.baseRelay.SetFields(mode, updateTime)
+func (gp *GPIORelay) Init() error {
+	gp.SetOff()
+	if len(gp.base.timings) > 0 {
+		go StartTimers(gp, gp.base)
+	}
 	return nil
 }
 
-func (gp *GPIORelay) Init() {
-	gp.baseRelay.StopTime = time.Time{}
-
-}
-func (gp *GPIORelay) GetPin() uint8 {
-	return gp.baseRelay.GetPin()
-}
-
-func (gp *GPIORelay) GetId() int {
-	return gp.baseRelay.GetId()
-}
-
-func (gp *GPIORelay) GetName() string {
-	return gp.baseRelay.GetName()
-}
-
-func (gp *GPIORelay) GetCurrentMode() string {
-	return gp.baseRelay.GetCurrentMode()
-}
-
-func (gp *GPIORelay) GetSecondsOff() string {
-	return gp.baseRelay.GetSecondsOff()
+func (gp *GPIORelay) SetConfig(id int, name string, pin uint8, timings []config.OpenTimeConfig) {
+	gp.base.SetConfig(id, name, pin, timings)
 }
 
 func (gp *GPIORelay) GetPropertiesMap() map[string]interface{} {
-	return gp.baseRelay.GetPropertiesMap()
+	return gp.base.GetPropertiesMap()
 }
 
-func (gp *GPIORelay) SetOn() error {
-	return gp.SetMode(RelayOn)
+func (gp *GPIORelay) SetOn(stopMinutes int) error {
+	go SetTimeOff(gp, stopMinutes)
+	gp.base.StopTime = time.Now().Add(time.Duration(stopMinutes) * time.Minute)
+	return gp.setMode(RelayOn)
 }
 func (gp *GPIORelay) SetOff() error {
-	return gp.SetMode(RelayOff)
+	return gp.setMode(RelayOff)
 }
 
-func (gp *GPIORelay) SetMode(mode string) error {
+func (gp *GPIORelay) setMode(mode string) error {
 	if err := rpio.Open(); err != nil {
 		fmt.Println(err)
 		return err
 	}
 	defer rpio.Close()
-	pin := rpio.Pin(gp.baseRelay.Pin)
+	pin := rpio.Pin(gp.base.Pin)
 	pin.Output()
 	if mode == RelayOff {
 		pin.High()
+		gp.base.SetOff()
 	} else {
 		pin.Low()
+		gp.base.SetOn()
 	}
-	gp.baseRelay.SetMode(mode)
 	return nil
 }

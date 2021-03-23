@@ -8,17 +8,10 @@ import (
 
 type IRelay interface {
 	SetConfig(id int, name string, pin uint8, timings []config.OpenTimeConfig)
-	Init()
-	GetPin() uint8
-	GetId() int
-	GetName() string
-	GetSecondsOff() string
-	GetCurrentMode() string
-	SetOn() error
+	SetOn(OpenMinutes int) error
 	SetOff() error
-	SetMode(mode string) error
-	SetFields(mode string, updateTime time.Time) error
 	GetPropertiesMap() map[string]interface{}
+	Init() error
 }
 
 type BaseRelay struct {
@@ -36,7 +29,7 @@ func (br *BaseRelay) SetFields(mode string, updateTime time.Time) error {
 		br.CurrentStatus = mode
 		br.UpdateTime = updateTime
 	} else {
-		return fmt.Errorf("Mode %s unsupported\n", mode)
+		return fmt.Errorf("mode %s unsupported", mode)
 	}
 	return nil
 }
@@ -51,18 +44,11 @@ func (br *BaseRelay) GetPropertiesMap() map[string]interface{} {
 
 }
 
-func (br *BaseRelay) Init() {
-	br.startTimers()
-}
-
 func (br *BaseRelay) SetConfig(id int, name string, pin uint8, timings []config.OpenTimeConfig) {
 	br.ID = id
 	br.Name = name
 	br.Pin = pin
 	br.timings = timings
-	if len(timings) > 0 {
-		go br.startTimers()
-	}
 }
 
 func (br *BaseRelay) GetPin() uint8 {
@@ -78,8 +64,13 @@ func (br *BaseRelay) GetName() string {
 }
 
 func (br *BaseRelay) GetSecondsOff() string {
-	if br.StopTime.IsZero() {
-		return "No Timer Set"
+	if br.StopTime.Before(time.Now()) {
+		if len(br.timings) > 0 {
+			return "Timers Exist"
+		} else {
+			return "No Timers Exist on Relay"
+
+		}
 	} else {
 		return fmt.Sprintf("%4.0f", time.Until(br.StopTime).Seconds())
 
@@ -92,56 +83,52 @@ func (br *BaseRelay) GetCurrentMode() string {
 
 func (br *BaseRelay) SetOn() error {
 
-	return br.SetMode(RelayOn)
+	return br.setMode(RelayOn)
 }
 
 func (br *BaseRelay) SetOff() error {
-	return br.SetMode(RelayOff)
+	return br.setMode(RelayOff)
 
 }
 
-func (br *BaseRelay) SetMode(mode string) error {
+func (br *BaseRelay) setMode(mode string) error {
 	if mode == RelayOn {
 		br.CurrentStatus = mode
-		go br.setOnAndTimer(1200)
-		printModeChange(br)
+
+		printModeChange(*br)
 	} else if mode == RelayOff {
 		br.CurrentStatus = mode
-		br.cancelTimer()
-		printModeChange(br)
+		br.StopTime = time.Now()
+		printModeChange(*br)
 	} else {
-		fmt.Errorf("Mode %s unsupportee\n", mode)
+		return fmt.Errorf("mode %s unsupported", mode)
 	}
 	return nil
 }
-func (br *BaseRelay) cancelTimer() {
-	br.StopTime = time.Time{}
-}
-func (br *BaseRelay) setOnAndTimer(stopinSeconds int) {
-	defer func() {
-		br.SetMode(RelayOff)
-	}()
-	br.CurrentStatus = RelayOn
-	br.StopTime = time.Now().Add(time.Duration(stopinSeconds) * time.Second)
-	timer := time.NewTimer(time.Duration(stopinSeconds) * time.Second)
-	<-timer.C
-	fmt.Printf("Timer %d fired\n", br.GetId())
+func SetTimeOff(relay IRelay, minutes int) {
+	fmt.Printf("Set Timer in %d minutes \n", minutes)
+	time.Sleep(time.Duration(int64(minutes) * int64(time.Minute)))
+	relay.SetOff()
+	fmt.Printf("Relay Set Off \n")
 }
 
-func (br *BaseRelay) startTimers() {
-	ticker := time.NewTicker(time.Millisecond * 5000)
+func StartTimers(relay IRelay, base *BaseRelay) {
+	ticker := time.NewTicker(time.Millisecond * 10000)
+	// Evaluation Loop
 	for t := range ticker.C {
 		evalutationTime := time.Now()
 		evaluationWeekDay := evalutationTime.Weekday()
 		evaluationHour := evalutationTime.Hour()
 		evaluationMinute := evalutationTime.Minute()
-		fmt.Println("Tick at", t, br.Name)
-		for _, timing := range br.timings {
-			if timing.WeekDay == int(evaluationWeekDay)+1 &&
-				timing.Hour == evaluationHour &&
-				br.CurrentStatus == RelayOff &&
-				timing.Minute <= evaluationMinute {
-				br.setOnAndTimer(timing.OpenTimeMinutes * 60)
+		fmt.Printf("Evaluation Cycle at:%v Relay:%s, status:%s, Stop time:%v \n",
+			t,
+			base.Name,
+			base.CurrentStatus,
+			base.StopTime.Format(time.RFC3339))
+		for _, timing := range base.timings {
+			if timing.WeekDay == int(evaluationWeekDay)+1 && timing.Hour == evaluationHour && base.CurrentStatus == RelayOff && timing.Minute == evaluationMinute {
+				relay.SetOn(timing.OpenTimeMinutes)
+
 			}
 		}
 	}

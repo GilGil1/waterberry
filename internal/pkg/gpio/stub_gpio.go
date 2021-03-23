@@ -17,56 +17,46 @@ const (
 // It may be a stub or a real io
 
 type StubRelay struct {
-	baseRelay BaseRelay
+	base *BaseRelay
+}
+
+func NewStubRelay() *StubRelay {
+	relay := StubRelay{}
+	relay.base = &BaseRelay{}
+	return &relay
 }
 
 func (gp *StubRelay) SetConfig(id int, name string, pin uint8, timings []config.OpenTimeConfig) {
-	gp.baseRelay.SetConfig(id, name, pin, timings)
+	gp.base.SetConfig(id, name, pin, timings)
 }
 
-func (gp *StubRelay) SetFields(mode string, updateTime time.Time) error {
-	gp.baseRelay.SetFields(mode, updateTime)
-	return nil
+func (gp *StubRelay) GetBaseRelay() *BaseRelay {
+	return gp.base
 }
 
-func (gp *StubRelay) Init() {
+func (gp *StubRelay) SetOn(stopMinutes int) error {
+	go SetTimeOff(gp, stopMinutes)
+	gp.base.StopTime = time.Now().Add(time.Duration(stopMinutes) * time.Minute)
 
-}
-
-func (gp *StubRelay) GetPin() uint8 {
-	return gp.baseRelay.Pin
-}
-
-func (gp *StubRelay) GetName() string {
-	return gp.baseRelay.Name
-}
-
-func (gp *StubRelay) GetCurrentMode() string {
-	return gp.baseRelay.CurrentStatus
-}
-
-func (gp StubRelay) GetId() int {
-	return gp.baseRelay.ID
-}
-
-func (gp StubRelay) GetSecondsOff() string {
-	return "A lot"
-}
-
-func (gp *StubRelay) SetOn() error {
-	return gp.SetMode(RelayOn)
+	return gp.base.SetOn()
 }
 func (gp *StubRelay) SetOff() error {
-	return gp.SetMode(RelayOff)
+	return gp.base.SetOff()
 }
 
-func (gp *StubRelay) SetMode(mode string) error {
-	gp.baseRelay.SetMode(mode)
-
+func (gp *StubRelay) Init() error {
+	gp.base.SetOff()
+	if len(gp.base.timings) > 0 {
+		go StartTimers(gp, gp.base)
+	}
 	return nil
 }
 
+// func (gp *StubRelay) SetMode(mode string) error {
+// 	return gp.base.SetMode(mode)
+// }
+
 func (gp *StubRelay) GetPropertiesMap() map[string]interface{} {
-	return gp.baseRelay.GetPropertiesMap()
+	return gp.base.GetPropertiesMap()
 
 }

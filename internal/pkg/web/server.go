@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -12,22 +13,27 @@ import (
 	"strings"
 	"time"
 	box "waterberry/internal/generator"
+	"waterberry/internal/pkg/config"
 	"waterberry/internal/pkg/gpio"
+	"waterberry/internal/pkg/weather"
 )
 
 var relaysInfo []gpio.IRelay
 var BuildTime string
 var GitCommit string
+var globalConfig config.GlobalConfig
 
 // Init ... init the server with the relay config
-func Init(relays []gpio.IRelay) {
+func Init(relays []gpio.IRelay, config config.GlobalConfig) {
 	relaysInfo = relays
+	globalConfig = config
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/relays", relaysHandler)
 	http.HandleFunc("/water", setHandler)
 	http.HandleFunc("/log", logHandler)
 	http.HandleFunc("/status", systemStatusHandler)
-
+	http.HandleFunc("/config", configHandler)
+	http.HandleFunc("/weather", weatherHandler)
 	err := http.ListenAndServe(":9090", nil)
 	if err != nil {
 		log.Fatal(err)
@@ -40,8 +46,8 @@ func enableCors(w *http.ResponseWriter) {
 func relaysHandler(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	jsonData := make([]map[string]interface{}, 0)
-	for _, v := range relaysInfo {
-		singleMap := v.GetPropertiesMap()
+	for _, relay := range relaysInfo {
+		singleMap := relay.GetPropertiesMap()
 		jsonData = append(jsonData, singleMap)
 	}
 	resp, err := json.MarshalIndent(jsonData, "", "\t")
@@ -105,7 +111,8 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 	switch mode[0] {
 
 	case gpio.RelayOn:
-		currentRelay.SetOn()
+		delayMinute := 1
+		currentRelay.SetOn(delayMinute)
 
 	case gpio.RelayOff:
 		currentRelay.SetOff()
@@ -125,6 +132,34 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	if b != nil {
 		w.Write(b)
 		return
+	}
+}
+
+func configHandler(w http.ResponseWriter, r *http.Request) {
+	bytes, err := json.MarshalIndent(globalConfig, "", "\t")
+	if err == nil {
+		w.Write(bytes)
+	} else {
+		w.Write([]byte(fmt.Sprintf("Error in logs : %v", err)))
+	}
+}
+
+func weatherHandler(w http.ResponseWriter, r *http.Request) {
+	resp, err := http.Get("http://api.openweathermap.org/data/2.5/forecast?q=Pardesiyya,il&APPID=1047fac797d01a4424c8b01b1642e907&units=metric")
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("Error in calling weather api : %v", err)))
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+	}
+	// Convert to weatherinfo
+	weatherInfo, err := weather.NewWeatherInfo(body)
+	if err != nil {
+		w.Write([]byte(err.Error()))
+	} else {
+		w.Write([]byte(weatherInfo.PrettyPrint()))
 	}
 }
 
@@ -156,13 +191,10 @@ func isWindows() bool {
 	return os.PathSeparator == '\\' && os.PathListSeparator == ';'
 }
 
-func RunTimmgs() {
+// func RunTimmgs() {
 
-	for _, relay := range relaysInfo {
-		relay.GetCurrentMode()
-	}
-}
-
-// func RelayExpectedModeNow(gp) {
-
+// 	for _, relay := range relaysInfo {
+// 		br := relay.GetBaseRelay()
+// 		br.GetCurrentMode()
+// 	}
 // }
